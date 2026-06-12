@@ -1,0 +1,404 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import "./styles.css";
+
+const identityStatement =
+  "Minun tehtäväni ei ole miellyttää yrittäjää. Minun tehtäväni on auttaa häntä näkemään, onko jäsenyys hänelle järkevä päätös — ja jos on, johdan hänet päätökseen.";
+
+const defaultOpeners = [
+  "Soitan siksi, että haluan nopeasti selvittää, olisiko tästä teille aidosti hyötyä.",
+  "Pidän tämän tiiviinä: haluan ymmärtää, mikä teillä on yrittäjänä juuri nyt tärkeintä.",
+  "En lähde esittelemään kaikkea. Kysyn ensin pari asiaa ja sanon sitten suoraan, onko jäsenyydessä teille järkeä."
+];
+
+const defaultCloses = [
+  "Kuulostaa siltä, että hyöty on selkeä. Otetaanko tämä nyt kuntoon?",
+  "Mikä tässä estää päätöksen tänään?",
+  "Lähdetäänkö tällä mukaan?",
+  "Tehdäänkö jäsenyys nyt voimaan?",
+  "Jos katsotaan tätä yrittäjän näkökulmasta, tämä on pieni päätös suhteessa hyötyyn. Laitetaanko voimaan?"
+];
+
+export default function Home() {
+  const [activeSection, setActiveSection] = useState("dashboard");
+  const [timer, setTimer] = useState(0);
+  const [running, setRunning] = useState(false);
+  const [saved, setSaved] = useState([]);
+  const [morningChecks, setMorningChecks] = useState([false, false, false]);
+  const [precallChecks, setPrecallChecks] = useState([false, false, false, false]);
+
+  const [form, setForm] = useState({
+    todaysIntent: "",
+    stateWord: "",
+    ankkuri: "",
+    futurePacing: "",
+    aani: "",
+    targetConversation: "",
+    riskPattern: "",
+    ensimmainenLause: defaultOpeners[2],
+    chosenClose: defaultCloses[0],
+    vakuuttava: "",
+    hyvaksyntaa: "",
+    huomenna: "",
+    lesson: "",
+    proof: ""
+  });
+
+  useEffect(() => {
+    const stored = localStorage.getItem("huippumyyjaProEntries");
+    if (stored) setSaved(JSON.parse(stored));
+  }, []);
+
+  useEffect(() => {
+    if (!running || timer <= 0) return;
+
+    const interval = setInterval(() => {
+      setTimer((previous) => {
+        if (previous <= 1) {
+          clearInterval(interval);
+          setRunning(false);
+          alert("Harjoitus valmis.");
+          return 0;
+        }
+        return previous - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [running, timer]);
+
+  const score = useMemo(() => {
+    let points = 0;
+    points += morningChecks.filter(Boolean).length * 15;
+    points += precallChecks.filter(Boolean).length * 8;
+    if (form.vakuuttava.trim()) points += 15;
+    if (form.hyvaksyntaa.trim()) points += 10;
+    if (form.huomenna.trim()) points += 10;
+    return Math.min(points, 100);
+  }, [morningChecks, precallChecks, form]);
+
+  function updateField(field, value) {
+    setForm({ ...form, [field]: value });
+  }
+
+  function startTimer(seconds) {
+    setTimer(seconds);
+    setRunning(true);
+  }
+
+  function formatTime(seconds) {
+    const min = String(Math.floor(seconds / 60)).padStart(2, "0");
+    const sec = String(seconds % 60).padStart(2, "0");
+    return `${min}:${sec}`;
+  }
+
+  function saveRoutine() {
+    const entry = {
+      date: new Date().toISOString().slice(0, 10),
+      score,
+      ...form
+    };
+
+    const updated = [...saved, entry];
+    setSaved(updated);
+    localStorage.setItem("huippumyyjaProEntries", JSON.stringify(updated));
+    alert("Päivä tallennettu voittopankkiin.");
+  }
+
+  function clearForm() {
+    if (!confirm("Tyhjennetäänkö tämän päivän lomake?")) return;
+    setForm({
+      todaysIntent: "",
+      stateWord: "",
+      ankkuri: "",
+      futurePacing: "",
+      aani: "",
+      targetConversation: "",
+      riskPattern: "",
+      ensimmainenLause: defaultOpeners[2],
+      chosenClose: defaultCloses[0],
+      vakuuttava: "",
+      hyvaksyntaa: "",
+      huomenna: "",
+      lesson: "",
+      proof: ""
+    });
+    setMorningChecks([false, false, false]);
+    setPrecallChecks([false, false, false, false]);
+  }
+
+  function clearSaved() {
+    if (!confirm("Poistetaanko kaikki tallennetut päivät?")) return;
+    localStorage.removeItem("huippumyyjaProEntries");
+    setSaved([]);
+  }
+
+  function toggleCheck(setter, values, index) {
+    const updated = [...values];
+    updated[index] = !updated[index];
+    setter(updated);
+  }
+
+  return (
+    <main className="container">
+      <section className="hero">
+        <div>
+          <p className="eyebrow">Huippumyyjän käyttöjärjestelmä</p>
+          <h1>Päivärutiini</h1>
+          <p>
+            Tavoite: et lähde soittoihin “saamaan kauppaa”, vaan johtamaan keskustelua niin selkeästi,
+            että yrittäjän on helpompi tehdä päätös.
+          </p>
+        </div>
+        <div className="scoreCard">
+          <span>Päivän suoritus</span>
+          <strong>{score}/100</strong>
+          <div className="progressOuter"><div className="progressInner" style={{ width: `${score}%` }} /></div>
+        </div>
+      </section>
+
+      <section className="timerBox">
+        <div>
+          <span className="small">Ajastin</span>
+          <div className="timer">{timer === 0 && !running ? "00:00" : formatTime(timer)}</div>
+        </div>
+        <div>
+          <button className="secondary" onClick={() => setRunning(false)}>Pysäytä</button>
+          <button className="secondary" onClick={() => { setRunning(false); setTimer(0); }}>Nollaa</button>
+        </div>
+      </section>
+
+      <nav className="tabs">
+        <button className={activeSection === "dashboard" ? "tab active" : "tab"} onClick={() => setActiveSection("dashboard")}>Kompassi</button>
+        <button className={activeSection === "morning" ? "tab active" : "tab"} onClick={() => setActiveSection("morning")}>Aamu 15 min</button>
+        <button className={activeSection === "precall" ? "tab active" : "tab"} onClick={() => setActiveSection("precall")}>Ennen soittoja</button>
+        <button className={activeSection === "evening" ? "tab active" : "tab"} onClick={() => setActiveSection("evening")}>Päivän jälkeen</button>
+        <button className={activeSection === "bank" ? "tab active" : "tab"} onClick={() => setActiveSection("bank")}>Voittopankki</button>
+      </nav>
+
+      {activeSection === "dashboard" && (
+        <section className="grid two">
+          <div className="card">
+            <p className="eyebrow">30 päivän ydinlause</p>
+            <h2>Myynti-identiteetti</h2>
+            <p className="quote">“{identityStatement}”</p>
+            <p className="small">
+              Lue tämä ääneen. Sen tarkoitus ei ole pumpata egoa, vaan poistaa hyväksynnän hakeminen ja palauttaa sinut
+              päätöksenteon johtajaksi.
+            </p>
+          </div>
+
+          <div className="card">
+            <p className="eyebrow">Tämän päivän säätö</p>
+            <h2>Myyntikompassi</h2>
+            <label>Tämän päivän intentio</label>
+            <textarea value={form.todaysIntent} onChange={(e) => updateField("todaysIntent", e.target.value)} placeholder="Esim. Johdan keskustelua rauhallisesti ja klousaan jokaisen relevantin keskustelun." />
+            <label>Tavoitetila yhdellä sanalla</label>
+            <textarea value={form.stateWord} onChange={(e) => updateField("stateWord", e.target.value)} placeholder="Esim. rauhallinen, terävä, lämmin, jämäkkä" />
+          </div>
+
+          <div className="card">
+            <p className="eyebrow">Nopea muistutus</p>
+            <h2>Älä tee näitä tänään</h2>
+            <ul className="sharpList">
+              <li>Älä selittele arvoa ennen kuin olet ymmärtänyt yrittäjän tilanteen.</li>
+              <li>Älä kysy lupaa olla vakuuttava.</li>
+              <li>Älä pehmennä klousia, jos hyöty on jo yhdessä todettu.</li>
+              <li>Älä tulkitse “ei” hylkäykseksi. Se on dataa.</li>
+            </ul>
+          </div>
+
+          <div className="card">
+            <p className="eyebrow">Tämän päivän vaarallinen kohta</p>
+            <h2>Hyväksynnän hakemisen ansa</h2>
+            <textarea value={form.riskPattern} onChange={(e) => updateField("riskPattern", e.target.value)} placeholder="Missä tilanteessa alan todennäköisimmin miellyttää, kiirehtiä tai pehmentää? Miten toimin siinä kohdassa toisin?" />
+          </div>
+        </section>
+      )}
+
+      {activeSection === "morning" && (
+        <section className="card">
+          <p className="eyebrow">Aamu</p>
+          <h2>15 minuutin käynnistys</h2>
+          <p className="lead">Tee nämä ennen ensimmäistä myyntiblokkia. Tarkoitus on rakentaa tila, jossa olet lämmin, rauhallinen ja jämäkkä.</p>
+
+          <Exercise
+            badge="1 · 7 min"
+            title="Huippumyyjä-ankkuri"
+            button="Käynnistä 7 min"
+            onTimer={() => startTimer(420)}
+            checked={morningChecks[0]}
+            onCheck={() => toggleCheck(setMorningChecks, morningChecks, 0)}
+          >
+            <p className="instruction">
+              Muista 3 hetkeä, jolloin olit vakuuttava, itsevarma tai sait toisen ihmisen liikkeelle.
+              Elä hetki uudelleen: kuva, ääni, kehon tunne, hengitys. Kun tunne on vahvimmillaan,
+              purista peukalo ja keskisormi yhteen. Tämä on päivän ankkuri.
+            </p>
+            <textarea value={form.ankkuri} onChange={(e) => updateField("ankkuri", e.target.value)} placeholder="3 onnistumisen hetkeä..." />
+          </Exercise>
+
+          <Exercise
+            badge="2 · 3 min"
+            title="Future pacing"
+            button="Käynnistä 3 min"
+            onTimer={() => startTimer(180)}
+            checked={morningChecks[1]}
+            onCheck={() => toggleCheck(setMorningChecks, morningChecks, 1)}
+          >
+            <p className="instruction">
+              Näe itsesi avaamassa keskustelu rauhallisesti, kysymässä tarkasti, käsittelemässä vastaväitteen ilman kiirettä
+              ja tekemässä klousin luonnollisesti. Hermosto harjoittelee etukäteen.
+            </p>
+            <textarea value={form.futurePacing} onChange={(e) => updateField("futurePacing", e.target.value)} placeholder="Miltä onnistunut myyntikeskustelu näyttää, kuulostaa ja tuntuu?" />
+          </Exercise>
+
+          <Exercise
+            badge="3 · 5 min"
+            title="Ääniharjoitus"
+            button="Käynnistä 5 min"
+            onTimer={() => startTimer(300)}
+            checked={morningChecks[2]}
+            onCheck={() => toggleCheck(setMorningChecks, morningChecks, 2)}
+          >
+            <p className="instruction">
+              Lue avaus tai klousi kolmella tavalla: liian innokkaasti, liian varovasti ja lopuksi rauhallisesti kuin johtaja.
+              Sääntö: tempo 15 % alas, tauot pidemmiksi, lauseen loppu alas.
+            </p>
+            <textarea value={form.aani} onChange={(e) => updateField("aani", e.target.value)} placeholder="Kirjoita päivän avaus tai klousauslause..." />
+          </Exercise>
+        </section>
+      )}
+
+      {activeSection === "precall" && (
+        <section className="card">
+          <p className="eyebrow">Ennen soittoja</p>
+          <h2>90 sekunnin tilaprotokolla</h2>
+          <p className="lead">Hengitys → ryhti → ankkuri → ensimmäinen lause ääneen. Tämä katkaisee automaattisen suorittamisen.</p>
+
+          <div className="protocol">
+            {["Hengitä 30 s: pidempi uloshengitys.", "Ryhti 30 s: hartiat alas, katse eteen.", "Ankkuri: peukalo + keskisormi yhteen.", "Sano ensimmäinen lause ääneen."].map((item, i) => (
+              <label key={item}>
+                <input type="checkbox" checked={precallChecks[i]} onChange={() => toggleCheck(setPrecallChecks, precallChecks, i)} />
+                {item}
+              </label>
+            ))}
+          </div>
+
+          <button className="primary" onClick={() => startTimer(90)}>Käynnistä 90 sek</button>
+
+          <div className="grid two">
+            <div className="panel">
+              <h3>Ensimmäinen lause</h3>
+              <textarea value={form.ensimmainenLause} onChange={(e) => updateField("ensimmainenLause", e.target.value)} />
+              <div className="chips">
+                {defaultOpeners.map((line) => (
+                  <button className="chip" key={line} onClick={() => updateField("ensimmainenLause", line)}>{line}</button>
+                ))}
+              </div>
+            </div>
+
+            <div className="panel">
+              <h3>Klousi, jota et pehmennä</h3>
+              <textarea value={form.chosenClose} onChange={(e) => updateField("chosenClose", e.target.value)} />
+              <div className="chips">
+                {defaultCloses.map((line) => (
+                  <button className="chip" key={line} onClick={() => updateField("chosenClose", line)}>{line}</button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="card inner">
+            <h3>Muista ennen puhelua</h3>
+            <p className="quote">“Minä en soita saadakseni. Minä soitan johtaakseni päätöstä.”</p>
+          </div>
+        </section>
+      )}
+
+      {activeSection === "evening" && (
+        <section className="card">
+          <p className="eyebrow">Päivän jälkeen</p>
+          <h2>7 minuutin voittopankki</h2>
+          <p className="lead">Tämä on identiteetin rakennusvaihe. Aivot eivät usko hypeä. Ne uskovat näyttöä.</p>
+          <button className="primary" onClick={() => startTimer(420)}>Käynnistä 7 min</button>
+
+          <div className="grid two">
+            <div className="panel">
+              <h3>Missä olin vakuuttava?</h3>
+              <textarea value={form.vakuuttava} onChange={(e) => updateField("vakuuttava", e.target.value)} placeholder="Kirjaa hetki, jossa johdit keskustelua, kysyit hyvin, pysyit rauhallisena tai klousasit." />
+            </div>
+            <div className="panel">
+              <h3>Missä hain hyväksyntää?</h3>
+              <textarea value={form.hyvaksyntaa} onChange={(e) => updateField("hyvaksyntaa", e.target.value)} placeholder="Missä pehmensin, kiirehdin, selittelin, miellytin tai jätin päätöksen johtamatta?" />
+            </div>
+            <div className="panel">
+              <h3>Mitä teen huomenna suoremmin?</h3>
+              <textarea value={form.huomenna} onChange={(e) => updateField("huomenna", e.target.value)} placeholder="Yksi konkreettinen käyttäytyminen huomiselle." />
+            </div>
+            <div className="panel">
+              <h3>Todiste identiteetistä</h3>
+              <textarea value={form.proof} onChange={(e) => updateField("proof", e.target.value)} placeholder="Mikä tämän päivän asia todistaa, että olen kehittymässä kovaksi myyjäksi?" />
+            </div>
+          </div>
+
+          <div className="panel">
+            <h3>Päivän oppi</h3>
+            <textarea value={form.lesson} onChange={(e) => updateField("lesson", e.target.value)} placeholder="Mitä opin asiakkaista, itsestäni, klousaamisesta tai ajoituksesta?" />
+          </div>
+        </section>
+      )}
+
+      {activeSection === "bank" && (
+        <section className="card">
+          <p className="eyebrow">Data rakentaa identiteettiä</p>
+          <h2>Voittopankki</h2>
+          <div className="actions">
+            <button className="success" onClick={saveRoutine}>Tallenna päivän rutiini</button>
+            <button className="secondary" onClick={clearForm}>Tyhjennä lomake</button>
+            <button className="danger" onClick={clearSaved}>Poista kaikki tallennetut</button>
+          </div>
+
+          {saved.length === 0 ? (
+            <p className="small">Ei tallennettuja päiviä vielä.</p>
+          ) : (
+            saved.slice().reverse().map((entry, index) => (
+              <article className="entry" key={index}>
+                <div className="entryHeader">
+                  <strong>{entry.date}</strong>
+                  <span>{entry.score}/100</span>
+                </div>
+                <p><strong>Vakuuttava:</strong> {entry.vakuuttava}</p>
+                <p><strong>Hyväksynnän haku:</strong> {entry.hyvaksyntaa}</p>
+                <p><strong>Huomenna suoremmin:</strong> {entry.huomenna}</p>
+                <p><strong>Todiste:</strong> {entry.proof}</p>
+              </article>
+            ))
+          )}
+        </section>
+      )}
+
+      <section className="card">
+        <h2>Tallenna</h2>
+        <p className="small">Päivä tallentuu selaimen muistiin. Jos käytät eri laitetta tai selainta, tiedot eivät siirry automaattisesti.</p>
+        <button className="success" onClick={saveRoutine}>Tallenna päivän rutiini</button>
+      </section>
+    </main>
+  );
+}
+
+function Exercise({ badge, title, children, button, onTimer, checked, onCheck }) {
+  return (
+    <div className="exercise">
+      <span className="badge">{badge}</span>
+      <h3>{title}</h3>
+      {children}
+      <button className="primary" onClick={onTimer}>{button}</button>
+      <label className="done">
+        <input type="checkbox" checked={checked} onChange={onCheck} />
+        Tehty
+      </label>
+    </div>
+  );
+}
