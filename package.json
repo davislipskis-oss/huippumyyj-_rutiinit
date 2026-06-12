@@ -1,0 +1,14 @@
+{
+  "name": "huippumyyja-rutiinit",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Staattinen selainpohjainen huippumyyja-rutiinien harjoitussovellus.",
+  "scripts": {
+    "build": "mkdir -p dist && cp index.html dist/index.html",
+    "start": "npx serve dist",
+    "dev": "npx serve ."
+  },
+  "dependencies": {
+    "serve": "latest"
+  }
+}
