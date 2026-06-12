@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Päivärutiini – Huippumyyjä</title>
+  <style>
+    :root {
+      --bg: #020617;
+      --card: #111827;
+      --card2: #1f2937;
+      --text: #f9fafb;
+      --muted: #9ca3af;
+      --accent: #38bdf8;
+      --success: #22c55e;
+      --danger: #ef4444;
+      --border: #334155;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #020617, #0f172a);
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    .container {
+      max-width: 920px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    h1, h2, h3 { margin-top: 0; }
+
+    .hero, .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 22px;
+      margin-bottom: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+    }
+
+    .hero p, .small, .muted { color: var(--muted); }
+
+    .tabs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .tab {
+      background: #1e293b;
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      text-align: center;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .tab.active {
+      background: var(--accent);
+      color: #020617;
+      border-color: var(--accent);
+    }
+
+    .section { display: none; }
+    .section.active { display: block; }
+
+    .step {
+      background: var(--card2);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 18px;
+      margin-bottom: 14px;
+    }
+
+    .badge {
+      display: inline-block;
+      background: rgba(56,189,248,0.12);
+      color: var(--accent);
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 13px;
+      margin-bottom: 10px;
+      font-weight: 700;
+    }
+
+    .instruction {
+      background: #020617;
+      border-left: 4px solid var(--accent);
+      padding: 15px;
+      border-radius: 10px;
+      margin: 12px 0;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 95px;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid #475569;
+      background: #020617;
+      color: var(--text);
+      margin-top: 8px;
+      font-size: 15px;
+      resize: vertical;
+    }
+
+    button {
+      border: none;
+      border-radius: 12px;
+      padding: 13px 18px;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+      margin: 6px 6px 6px 0;
+    }
+
+    .primary { background: var(--accent); color: #020617; }
+    .secondary { background: #334155; color: var(--text); }
+    .success { background: var(--success); color: #052e16; }
+    .danger { background: var(--danger); color: white; }
+
+    .timerBox {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: rgba(2, 6, 23, 0.92);
+      border: 1px solid var(--border);
+      backdrop-filter: blur(10px);
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .timer {
+      font-size: 46px;
+      font-weight: 800;
+      color: var(--accent);
+      margin: 4px 0;
+      letter-spacing: 1px;
+    }
+
+    .quote {
+      font-size: 21px;
+      font-weight: 800;
+      color: #e0f2fe;
+    }
+
+    .checklist label {
+      display: block;
+      background: #020617;
+      margin: 8px 0;
+      padding: 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      border: 1px solid #334155;
+    }
+
+    input[type="checkbox"] {
+      margin-right: 10px;
+      transform: scale(1.15);
+    }
+
+    .progress-wrap {
+      height: 12px;
+      background: #334155;
+      border-radius: 999px;
+      overflow: hidden;
+      margin: 12px 0;
+    }
+
+    .progress {
+      height: 100%;
+      width: 0%;
+      background: var(--accent);
+      transition: width 0.3s ease;
+    }
+
+    .footer {
+      color: var(--muted);
+      font-size: 13px;
+      text-align: center;
+      padding: 20px 0;
+    }
+
+    @media (max-width: 700px) {
+      .container { padding: 14px; }
+      .tabs { grid-template-columns: 1fr; }
+      .timer { font-size: 38px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <section class="hero">
+      <h1>Päivärutiini – Huippumyyjä</h1>
+      <p>Tee rutiini nopeasti ilman, että sinun tarvitsee muistaa ohjeita ulkoa. Aamu 15 min, ennen soittoja 90 sek, päivän jälkeen 7 min.</p>
+    </section>
+
+    <section class="card">
+      <h2>30 päivän ydinlause</h2>
+      <p class="instruction quote">
+        “Minun tehtäväni ei ole miellyttää yrittäjää. Minun tehtäväni on auttaa häntä näkemään, onko jäsenyys hänelle järkevä päätös — ja jos on, johdan hänet päätökseen.”
+      </p>
+      <p class="small">Lue tämä ääneen ennen päivän ensimmäistä myyntiblokkia ja aina ennen vaikeaa soittoa.</p>
+    </section>
+
+    <div class="tabs">
+      <button class="tab active" onclick="showSection('morning', this)">Aamu · 15 min</button>
+      <button class="tab" onclick="showSection('precall', this)">Ennen soittoja · 90 sek</button>
+      <button class="tab" onclick="showSection('evening', this)">Päivän jälkeen · 7 min</button>
+    </div>
+
+    <section class="timerBox">
+      <div class="small">Ajastin</div>
+      <div class="timer" id="timer">00:00</div>
+      <button class="secondary" onclick="stopTimer()">Pysäytä</button>
+      <button class="secondary" onclick="resetTimer()">Nollaa</button>
+    </section>
+
+    <form id="routineForm">
+      <section id="morning" class="section active">
+        <div class="card">
+          <h2>Aamu, 15 min</h2>
+          <div class="progress-wrap"><div class="progress" id="morningProgress"></div></div>
+          <p class="small" id="morningProgressText">0 / 3 tehtävää valmiina</p>
+
+          <div class="step">
+            <span class="badge">1 · Huippumyyjä-ankkuri · 7 min</span>
+            <h3>Asenna päivän tila</h3>
+            <p class="instruction">
+              Muista 3 hetkeä, jolloin olit vakuuttava, itsevarma, terävä tai sait toisen ihmisen liikkeelle.
+              Näe tilanne omin silmin. Kuule oma äänesi. Tunne ryhti, hengitys, katse ja energia.
+              Kun tunne on vahvimmillaan, purista peukalo ja keskisormi yhteen.
+            </p>
+            <textarea name="ankkuri" placeholder="Kirjoita 3 onnistumisen hetkeä..."></textarea>
+            <button type="button" class="primary" onclick="startTimer(420)">Käynnistä 7 min</button>
+            <label class="small"><input type="checkbox" class="morningCheck" onchange="updateMorningProgress()"> Tehty</label>
+          </div>
+
+          <div class="step">
+            <span class="badge">2 · Future pacing · 3 min</span>
+            <h3>Esiharjoittele onnistunut myyntipäivä</h3>
+            <p class="instruction">
+              Kuvittele päivän tai huomisen myyntitilanne: avaat rauhallisesti, käsittelet vastustelun lämpimän jämäkästi
+              ja klousaat ilman anteeksipyyntöä. Lopuksi näe asiakas sanomassa: “Tuo oli muuten hyvä keskustelu.”
+            </p>
+            <textarea name="futurePacing" placeholder="Miltä onnistunut myyntitilanne näyttää, kuulostaa ja tuntuu?"></textarea>
+            <button type="button" class="primary" onclick="startTimer(180)">Käynnistä 3 min</button>
+            <label class="small"><input type="checkbox" class="morningCheck" onchange="updateMorningProgress()"> Tehty</label>
+          </div>
+
+          <div class="step">
+            <span class="badge">3 · Ääniharjoitus · 5 min</span>
+            <h3>Vakuuttava ääni</h3>
+            <p class="instruction">
+              Lue oma avaus tai klousaus kolmella tavalla: liian innokkaasti, liian varovasti ja lopuksi rauhallisesti kuin johtaja.
+              Tavoite: tempo 15 % hitaampi, tauot pidemmät, lauseet alas.
+            </p>
+            <textarea name="aani" placeholder="Kirjoita tämän päivän avaus, klousaus tai tärkeä lause..."></textarea>
+            <button type="button" class="primary" onclick="startTimer(300)">Käynnistä 5 min</button>
+            <label class="small"><input type="checkbox" class="morningCheck" onchange="updateMorningProgress()"> Tehty</label>
+          </div>
+        </div>
+      </section>
+
+      <section id="precall" class="section">
+        <div class="card">
+          <h2>Ennen soittoja, 90 sek</h2>
+          <p class="instruction">
+            Tee tämä ennen tärkeää soittoa tai myyntiblokkia: <strong>Hengitys → ryhti → ankkuri → ensimmäinen lause ääneen.</strong>
+          </p>
+
+          <div class="step">
+            <span class="badge">0–30 s</span>
+            <h3>Hengitys</h3>
+            <p class="instruction">Hengitä nenän kautta sisään. Uloshengitys pidempänä kuin sisäänhengitys. Hermosto alas, terävyys ylös.</p>
+          </div>
+
+          <div class="step">
+            <span class="badge">30–60 s</span>
+            <h3>Ryhti</h3>
+            <p class="instruction">Nosta ryhti, hartiat alas, katse eteen. Keho ensin, tunne perässä.</p>
+          </div>
+
+          <div class="step">
+            <span class="badge">60–90 s</span>
+            <h3>Ankkuri + ensimmäinen lause</h3>
+            <p class="instruction">
+              Purista peukalo ja keskisormi yhteen. Sano ensimmäinen lause ääneen ennen soittoa.
+            </p>
+            <textarea name="ensimmainenLause" placeholder="Kirjoita tähän ensimmäinen lause, jonka sanot ääneen ennen soittoa..."></textarea>
+          </div>
+
+          <p class="quote">“Minä en soita saadakseni. Minä soitan johtaakseni päätöstä.”</p>
+          <button type="button" class="primary" onclick="startTimer(90)">Käynnistä 90 sek</button>
+        </div>
+      </section>
+
+      <section id="evening" class="section">
+        <div class="card">
+          <h2>Päivän jälkeen, 7 min</h2>
+          <p class="instruction">Kirjaa kolme asiaa. Tämä rakentaa voittopankkia ja antaa aivoille näyttöä siitä, että olet kehittyvä, vakuuttava myyjä.</p>
+
+          <div class="step">
+            <span class="badge">1</span>
+            <h3>Missä olin vakuuttava?</h3>
+            <textarea name="vakuuttava" placeholder="Kirjaa konkreettinen hetki, lause, kysymys, vastaväitteen käsittely tai klousausyritys..."></textarea>
+          </div>
+
+          <div class="step">
+            <span class="badge">2</span>
+            <h3>Missä menin hakemaan hyväksyntää?</h3>
+            <textarea name="hyvaksyntaa" placeholder="Missä kohtaa pehmensin liikaa, kiirehdin, selittelin tai jätin johtamatta keskustelua?"></textarea>
+          </div>
+
+          <div class="step">
+            <span class="badge">3</span>
+            <h3>Mitä teen huomenna suoremmin?</h3>
+            <textarea name="huomenna" placeholder="Yksi konkreettinen asia, jonka teen huomenna suoremmin..."></textarea>
+          </div>
+
+          <button type="button" class="primary" onclick="startTimer(420)">Käynnistä 7 min</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Tallenna päivä</h2>
+        <p class="small">Tallennus tapahtuu tämän selaimen muistiin. Sama selain muistaa aiemmat kirjaukset.</p>
+        <button type="button" class="success" onclick="saveRoutine()">Tallenna päivän rutiini</button>
+        <button type="button" class="danger" onclick="clearForm()">Tyhjennä lomake</button>
+      </section>
+    </form>
+
+    <section class="card">
+      <h2>Tallennetut päivät</h2>
+      <button type="button" class="secondary" onclick="showSaved()">Näytä tallennetut</button>
+      <button type="button" class="danger" onclick="clearSaved()">Poista kaikki tallennetut</button>
+      <div id="savedList" class="small"></div>
+    </section>
+
+    <div class="footer">
+      Tee tämä 30 päivää. Älä arvioi tunnetta. Arvioi toistoa.
+    </div>
+  </div>
+
+  <script>
+    const timerEl = document.getElementById("timer");
+    let timerInterval = null;
+    let lastSeconds = 0;
+
+    function showSection(id, button) {
+      document.querySelectorAll(".section").forEach(section => section.classList.remove("active"));
+      document.getElementById(id).classList.add("active");
+
+      document.querySelectorAll(".tab").forEach(tab => tab.classList.remove("active"));
+      button.classList.add("active");
+
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function renderTimer(seconds) {
+      const min = String(Math.floor(seconds / 60)).padStart(2, "0");
+      const sec = String(seconds % 60).padStart(2, "0");
+      timerEl.textContent = min + ":" + sec;
+    }
+
+    function startTimer(seconds) {
+      clearInterval(timerInterval);
+      lastSeconds = seconds;
+      let remaining = seconds;
+      renderTimer(remaining);
+
+      timerInterval = setInterval(() => {
+        remaining--;
+        renderTimer(remaining);
+
+        if (remaining <= 0) {
+          clearInterval(timerInterval);
+          timerEl.textContent = "Valmis";
+          alert("Harjoitus valmis.");
+        }
+      }, 1000);
+    }
+
+    function stopTimer() {
+      clearInterval(timerInterval);
+    }
+
+    function resetTimer() {
+      clearInterval(timerInterval);
+      renderTimer(lastSeconds || 0);
+    }
+
+    function updateMorningProgress() {
+      const checks = document.querySelectorAll(".morningCheck");
+      const done = Array.from(checks).filter(check => check.checked).length;
+      const percent = (done / checks.length) * 100;
+
+      document.getElementById("morningProgress").style.width = percent + "%";
+      document.getElementById("morningProgressText").textContent = done + " / " + checks.length + " tehtävää valmiina";
+    }
+
+    function saveRoutine() {
+      const form = document.getElementById("routineForm");
+      const data = new FormData(form);
+      const today = new Date().toISOString().slice(0, 10);
+
+      const entry = {
+        date: today,
+        ankkuri: data.get("ankkuri"),
+        futurePacing: data.get("futurePacing"),
+        aani: data.get("aani"),
+        ensimmainenLause: data.get("ensimmainenLause"),
+        vakuuttava: data.get("vakuuttava"),
+        hyvaksyntaa: data.get("hyvaksyntaa"),
+        huomenna: data.get("huomenna")
+      };
+
+      const saved = JSON.parse(localStorage.getItem("paivarutiiniHuippumyyja") || "[]");
+      saved.push(entry);
+      localStorage.setItem("paivarutiiniHuippumyyja", JSON.stringify(saved));
+
+      alert("Päivän rutiini tallennettu.");
+      showSaved();
+    }
+
+    function clearForm() {
+      if (confirm("Haluatko varmasti tyhjentää lomakkeen?")) {
+        document.getElementById("routineForm").reset();
+        updateMorningProgress();
+      }
+    }
+
+    function showSaved() {
+      const saved = JSON.parse(localStorage.getItem("paivarutiiniHuippumyyja") || "[]");
+      const list = document.getElementById("savedList");
+
+      if (saved.length === 0) {
+        list.innerHTML = "<p>Ei tallennettuja päiviä.</p>";
+        return;
+      }
+
+      list.innerHTML = saved.slice().reverse().map(entry => `
+        <div class="step">
+          <strong>${entry.date}</strong>
+          <p><strong>Vakuuttava:</strong> ${escapeHtml(entry.vakuuttava || "")}</p>
+          <p><strong>Hyväksynnän haku:</strong> ${escapeHtml(entry.hyvaksyntaa || "")}</p>
+          <p><strong>Huomenna suoremmin:</strong> ${escapeHtml(entry.huomenna || "")}</p>
+        </div>
+      `).join("");
+    }
+
+    function clearSaved() {
+      if (confirm("Haluatko varmasti poistaa kaikki tallennetut päivät?")) {
+        localStorage.removeItem("paivarutiiniHuippumyyja");
+        showSaved();
+      }
+    }
+
+    function escapeHtml(text) {
+      return String(text)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    renderTimer(0);
+    updateMorningProgress();
+  </script>
+</body>
+</html>
